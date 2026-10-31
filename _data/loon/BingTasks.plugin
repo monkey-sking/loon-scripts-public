@@ -1,0 +1,32 @@
+#!name = Bing 每日任务（公开镜像）
+#!desc = 必应 App 签到 / 自动阅读 / 自动搜索 + 令牌失效提醒。脚本托管在公开镜像仓库，私有主仓库的 raw 地址 Loon 取不到。
+#!author = Monkey-Sking
+#!homepage = https://github.com/monkey-sking/loon-scripts-public
+#!date = 2026-10-31 11:30:00
+
+[Argument]
+Bing_Task_Enable = switch, true, false, tag=Bing任务总开关, desc=启用 Bing 每日任务 (建议常开)
+Bing_Checkin_Enable = switch, true, false, tag=Bing签到开关, desc=启用 Bing App 签到任务（如 App 端已下线可关闭）
+Bing_Read_Enable = switch, true, false, tag=Bing阅读开关, desc=启用 Bing 自动阅读任务 (建议常开)
+Bing_Search_Enable = switch, true, false, tag=Bing搜索开关, desc=启用 Bing 自动搜索任务 (建议常开)
+Bing_CRON = input, "0 7 * * *", tag=Bing签到定时, desc=每日签到 Cron 表达式
+Bing_Read_CRON = input, "10 7,12,18 * * *", tag=Bing阅读定时, desc=自动阅读 Cron 表达式
+Bing_Search_CRON = input, "0 7,9,12,14,17 * * *", tag=Bing搜索定时, desc=自动搜索 Cron 表达式
+Bing_Open_URL = input, "sapphire://", tag=通知跳转地址, desc=点通知打开的地址，默认唤起必应 App；留空则用脚本内置默认值
+
+TG_USER_ID = input, "", tag=TG UserID, desc=Telegram User ID（选填）
+TG_BOT_TOKEN = input, "", tag=TG BotToken, desc=Telegram Bot Token（选填，自己填）
+BARK_PUSH = input, "", tag=Bark链接, desc=Bark 推送链接（选填）
+TG_Notify_Enable = switch, false, true, tag=Telegram通知, desc=是否开启Telegram通知
+Bark_Notify_Enable = switch, false, true, tag=Bark通知, desc=是否开启Bark通知
+
+[Script]
+# === Bing 定时任务 ===
+cron {Bing_CRON} script-path=bing_app_checkin_task.js, tag=Bing每日签到, enable={Bing_Task_Enable}, argument=[{Bing_Checkin_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
+cron {Bing_Read_CRON} script-path=bing_app_read_task.js, tag=Bing自动阅读, enable={Bing_Task_Enable}, argument=[{Bing_Read_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
+cron {Bing_Search_CRON} script-path=bing_web_search_task.js, tag=Bing自动搜索, enable={Bing_Task_Enable}, argument=[{Bing_Search_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
+
+# === 手动触发入口 ===
+http-request ^https:\/\/www\.bing\.com\/loon_trigger\/bing_checkin script-path=bing_app_checkin_task.js, tag=Bing签到(手动触发), enable={Bing_Task_Enable}, argument=[{Bing_Checkin_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
+http-request ^https:\/\/www\.bing\.com\/loon_trigger\/bing_read script-path=bing_app_read_task.js, tag=Bing阅读(手动触发), enable={Bing_Task_Enable}, argument=[{Bing_Read_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
+http-request ^https:\/\/www\.bing\.com\/loon_trigger\/bing_search script-path=bing_web_search_task.js, tag=Bing搜索(手动触发), enable={Bing_Task_Enable}, argument=[{Bing_Search_Enable},{TG_USER_ID},{TG_BOT_TOKEN},{BARK_PUSH},{TG_Notify_Enable},{Bark_Notify_Enable},{Bing_Open_URL}]
